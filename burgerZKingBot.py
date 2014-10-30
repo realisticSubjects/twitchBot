@@ -30,25 +30,34 @@ def hello(irc_sender):
   	irc.send("PRIVMSG "+ channel +" :Hello " + irc_sender + ' !\n')
 
 def cmd():
-	irc.send("PRIVMSG "+ channel +" :!ping / !hi /!cmd\n")
+	irc.send("PRIVMSG "+ channel +" :!cmd / !ping / !hi / !gess / !points\n")
 
 def gessNumber(client, db, collection, irc_sender):
   print("in gess number")
-  goal = str(random.randint(1,6))#random.randint(1,20)
+  goal = str(random.randint(1,20))#random.randint(1,20)
   gess = False
+
+  irc.send("PRIVMSG "+ channel + " :Devinez un nombre entre 1 et 20\n")
+
   
   while (gess == False):
     irc_msg = irc.recv(1024) # receive data from the server
     irc_sender = irc_msg.split(':')[1]
     irc_sender = irc_sender.split('!')[0]
 
+
     if irc_msg.find(goal) != -1:
       irc.send("PRIVMSG "+ channel + " :Victoire !! " + irc_sender + " gagne 10 pts!\n")
-      collection.update({'nick':irc_sender}, {'$inc': {'points' : 10}}, True)
+      collection.update({'nick': irc_sender}, {'$inc': {'points' : 10}}, True)
       
       gess = True
       break
 
+def getPoints(collection, irc_sender):
+  pts = collection.find_one({'nick': irc_sender})
+  poin = pts.get('points')
+  poin = int(poin)
+  irc.send("PRIVMSG "+ channel +" :" + str(poin) + " points\n")
 
 while True:
   irc_msg = irc.recv(1024) # receive data from the server
@@ -64,4 +73,6 @@ while True:
   	cmd()
   if irc_msg.find('!gess') != -1:
     gessNumber(client, db, collection, irc_sender)
+  if irc_msg.find('!points') != -1:
+    getPoints(collection, irc_sender)
 
